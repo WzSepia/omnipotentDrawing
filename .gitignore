@@ -1,0 +1,7 @@
+node_modules
+
+*.xml
+*.idea
+*.vscode
+*.git
+*env.local

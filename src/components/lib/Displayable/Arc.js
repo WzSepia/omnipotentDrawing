@@ -1,7 +1,7 @@
 import * as od from "zrender";
 
 /**
- * @des 圆弧
+ * @description 圆弧
     opts	Object	 	配置项，继承得到的配置项参见 zrender.Displayable。
     opts.shape	Object	 	形状属性。
     opts.shape.cx	number	0	圆心横坐标。
@@ -12,7 +12,7 @@ import * as od from "zrender";
     opts.shape.clockwise	boolean	true	顺时针方向。
 */
 
-export function Arc(zr,opts) {
+export function Arc(opts,zr) {
     if(!zr) return;
     if(typeof(opts)!= 'object') return;
     // const options = {
@@ -26,8 +26,7 @@ export function Arc(zr,opts) {
     //         closed: opts.clockwise || true,
     //     }
     // }
-    const arc = new od.Arc(opts);
-    arc.attr('name','arc');
-    zr.add(arc);
-    return arc;
+    const el = new od.Arc(opts);
+    zr.add(el);
+    return el;
 }

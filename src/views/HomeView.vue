@@ -45,6 +45,7 @@ export default {
       };
       this.zr = od.init.init(el, opts);
       this.zr.arr = [];
+      this.handelClick();
     },
     //绘制圆
     drawArc() {
@@ -178,6 +179,28 @@ export default {
         });
       }
     },
+    /**
+     * 点击 
+    */
+   handelClick(){
+    this.zr.on('click',function(e){
+      console.log(e)
+    },this.zr)
+   },
+    /**
+     * 保存
+    */
+    save(){
+      let options = {
+        grid:{
+          width:'',// string
+          height:'',// string
+        },
+        events:['click'],
+        els:this.zr.arr,// Array
+      }
+      console.log(options);
+    }
   },
 };
 </script>

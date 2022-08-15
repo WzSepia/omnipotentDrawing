@@ -16,3 +16,24 @@ input{
     width: 200px;
     height: 35px;
 }
+
+::-webkit-scrollbar{
+    width: 4px;
+    background-color: #cccccc;
+}
+
+::-webkit-scrollbar-button{
+    width: 0;
+    height: 0;
+    background-color: #000000;
+}
+//轨道
+::-webkit-scrollbar-track{
+    border-radius: 4px;
+    background-color: #666;
+}
+//滑块
+::-webkit-scrollbar-thumb{
+    border-radius: 4px;
+    background-color: #333;
+}

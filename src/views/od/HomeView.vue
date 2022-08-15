@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import od from "../components/lib/";
+import od from "../../components/lib";
 export default {
   name: "HomeView",
   data() {

@@ -1,0 +1,23 @@
+:root{
+    --color:#f2f2f2;
+    --bg-btn-color:#333333;
+    --border-left-color:#f2f2f2;
+}
+
+html.dark{
+    --color:#f2f2f2;
+    --bg-color:#333333;
+    --bg-btn-color:#333333;
+    --bg-li-color:#333333;
+    --bg-li-color-header:#666363;
+    --bg-li-color-hover:blue;
+}
+
+html.light{
+    --color:#333333;
+    --bg-color:#f1f1f1;
+    --bg-btn-color:#f2f2f2;
+    --bg-li-color:#f2f2f2;
+    --bg-li-color-header:#d5d5d5;
+    --bg-li-color-hover:lightblue;
+}

@@ -10,12 +10,11 @@ import * as od from "zrender";
     opts.style.width	number	 	图片宽度。
     opts.style.height	number	 	图片高度。
 */
-export function Image(opts,zr) {
-    if (!zr) return;
-    if (typeof opts != "object") return;
-    opts.draggable = true;
-    opts.rectHover = true;
+export function Image(opts) {
     const el = new od.Image(opts);
-    zr.add(el);
+    el.attr({
+        type:'image',
+        name:'image'+el.id
+    });
     return el;
 }

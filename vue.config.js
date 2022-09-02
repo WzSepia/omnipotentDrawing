@@ -2,8 +2,8 @@ const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   devServer:{
     open:false,
-    // host:'localhost',
-    // port:8080,
+    host:'localhost',
+    port:8080,
     hot:true,
     https:false,
     proxy:{
@@ -25,7 +25,7 @@ module.exports = defineConfig({
         .use("sass-resources-loader")
         .loader("sass-resources-loader")
         .options({
-          resources: "./src/components/css/variables.scss",
+          resources: "./src/omnipotentDrawing/css/theme/index.scss",
         })
         .end();
     });

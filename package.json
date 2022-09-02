@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "core-js": "^3.8.3",
+    "element-plus": "^2.2.15",
     "sass": "^1.54.3",
     "sass-loader": "^13.0.2",
     "sass-resources-loader": "^2.2.5",

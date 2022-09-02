@@ -1,0 +1,6 @@
+@mixin home(){
+    @include themeify{
+        color: themed('color');
+        background-color: themed('bg-btn-color');
+    }
+}

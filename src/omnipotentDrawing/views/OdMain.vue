@@ -41,7 +41,11 @@ export default {
     return {
       theme: "dark",
       zr: null,
-      grid: {}, //画布设置数据
+      grid: {
+        width:null,
+        height:null,
+        backgroundImage:''
+      }, //画布设置数据
       events: [], //事件数据
       series: [], //画布元素集
     };
@@ -56,6 +60,7 @@ export default {
       const el = document.getElementById("board-main");
       el.style.width = this.grid.width;
       el.style.height = this.grid.height;
+      el.style.backgroundImage = this.grid.backgroundImage;
       const opts = {
         renderer: "canvas",
         devicePixelRatio: 2,
@@ -65,8 +70,17 @@ export default {
       this.zr = od.init.init(el, opts);
       // this.handelClick();
     },
-
-    //绘制方法集合
+    /**
+     * @name 更新画布大小
+     * @description 当容器大小改变时，更新画布大小
+    */
+    resize(){
+      this.zr.resize(this.grid);
+    },
+    /**
+     * @name 绘制方法集合
+     * @description 包含文本，图片，形状等绘制方法
+    */
     odRender(type, opts) {
       switch (type) {
         case "text":
@@ -77,21 +91,27 @@ export default {
           break;
       }
     },
-    //绘制文本
+    /**
+     * 绘制文本
+    */
     drawText(opts) {
       const text = od.Displayable.Text(opts);
-      this.handleClickEL(text);
+      // this.handleClickEL(text);
       this.zr.add(text);
       this.series.push(text);
     },
-    //图片（包括SVG）
+    /**
+     * 图片（包括SVG）
+    */
     drawImg(opts) {
       const img = od.Displayable.Image(opts);
       this.zr.add(img);
       this.series.push(img);
     },
     /**
-     * 鼠标按下
+     * @name 鼠标按下（点击）
+     * @description 鼠标在实例有按下（点击）操作，
+     * @description 检测并校验当前可操作图形元素
      * */
     handleDown(e) {
       const ev = e || window.event;
@@ -104,7 +124,10 @@ export default {
         this.zr.currentEl = val;
       });
     },
-    //鼠标抬起
+    /**
+     * @name 鼠标抬起
+     * @description 
+    */
     handleUp() {
       this.zr.currentEl = false;
     },
@@ -121,7 +144,9 @@ export default {
       );
     },
     /**
-     * 元素点击
+     * @name 元素点击
+     * @description 配置面板可配置元素点击事件
+     * @param context:可执行上下文，可执行操作元素（图形元素）
      * */
     handleClickEL(context) {
       context.on("mousedown", (e) => {
@@ -129,7 +154,8 @@ export default {
       });
     },
     /**
-     * @description 删除
+     * @name 删除元素（图形元素）
+     * @description 删除实例上的图形元素，同时调整元素集
      * @param el:元素
      * @param index:元素在元素集合的索引值
      * */
@@ -139,7 +165,11 @@ export default {
       this.series.splice(index, 1);
     },
     /**
-     * @description 保存
+     * @name 保存数据，
+     * @description 保存现有配置下的图形数据
+     * @param grid:网格，容器数据
+     * @param events:事件信息或方法
+     * @param series:展示和绘制的图形数据
      */
     save() {
       let options = {
@@ -150,7 +180,8 @@ export default {
       console.log(options);
     },
     /**
-     * 关闭
+     * @name 关闭绘图系统界面
+     * @description 对现有信息进行处理和确认，然后关闭配置界面
      */
     close() {
       this.$message({
@@ -158,7 +189,10 @@ export default {
         type: "error",
       });
     },
-    //切换主题
+    /**
+     * @name 切换主题
+     * @description 现有浅色系和深色系主题切换
+    */
     changeTheme() {
       this.theme = this.theme == "light" ? "dark" : "light";
       document

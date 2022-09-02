@@ -34,22 +34,32 @@
                 ></el-button>
               </div>
             </div>
+
             <div>
               <p>背景图片</p>
               <div class="content">
-                <el-form-item label="宽">
-                  <el-select v-model="grid.backgroundImage">
-                    <el-option label="--请选择--" value='0'></el-option>
+                <el-form-item label="img/svg">
+                  <el-select @change="bgImgSelect">
+                    <el-option label="--请选择--" value="0"></el-option>
                   </el-select>
                 </el-form-item>
               </div>
               <div class="btns">
-                <el-button
-                  type="primary"
-                  round
-                  :icon="'Check'"
-                  @click="sureGrid"
-                ></el-button>
+                <el-upload
+                  v-model:file-list="fileList"
+                  ref="uploadRef"
+                  class="upload-demo"
+                  :auto-upload="false"
+                  :on-change="bgImgUpload"
+                >
+                  <template #trigger>
+                    <el-button
+                      type="primary"
+                      circle
+                      :icon="'Upload'"
+                    ></el-button>
+                  </template>
+                </el-upload>
               </div>
             </div>
           </el-collapse-item>
@@ -60,18 +70,30 @@
 </template>
 
 <script>
+/* eslint-disable */
 export default {
   name: "OdConfig",
   props: {},
   data() {
     return {
       activeNames: "1",
+      fileList: [], //
       grid: {
         width: null,
         height: null,
+        backgroundImage: "",
       },
       config: {},
     };
+  },
+  watch: {
+    // 该回调将会在被侦听的对象的属性改变时调动，无论其被嵌套多深
+    // grid: {
+    //   handler(data) {
+    //     console.log(data)
+    //   },
+    //   deep: true
+    // },
   },
   mounted() {},
   methods: {
@@ -79,8 +101,28 @@ export default {
      * 确认画布大小配置
      */
     sureGrid() {
+      if (!this.grid.width || !this.grid.height) return;
       this.$parent.grid = this.grid;
-      this.$parent.init();
+      if (!!this.$parent.zr) {
+        this.$parent.resize();
+      } else {
+        this.$parent.init();
+      }
+    },
+    /**
+     * 画布背景图设置
+     */
+    bgImgUpload(file) {
+      const _this = this;
+      var reader = new FileReader();
+      reader.readAsDataURL(file.raw);
+      reader.onload = function (e) {
+        _this.grid.backgroundImage = e.target.result;
+      };
+    },
+    //
+    bgImgSelect(data) {
+      console.log(data);
     },
   },
 };
@@ -111,10 +153,10 @@ export default {
         color: var(--color);
         background-color: var(--bg-li-color);
       }
-      .el-collapse-item__header{
+      .el-collapse-item__header {
         height: 35px;
         text-indent: 14px;
-        background-color: var(--bg-li-color-header)
+        background-color: var(--bg-li-color-header);
       }
       .el-collapse-item__content {
         padding: 10px 0;

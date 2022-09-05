@@ -18,37 +18,55 @@
         />
       </div>
       <div class="board">
-        <div id="board-main" @mousedown="handleDown" @mouseup="handleUp"></div>
+        <div
+          id="board-main"
+          @mousedown="handleDown"
+          @mouseup="handleUp"
+          @mousemove="handleMove"
+        ></div>
+        <!-- <div id="board-main"></div> -->
       </div>
       <div class="config">
-        <od-config :grid="grid" />
+        <div class="title">配置</div>
+        <component :is="configView" />
       </div>
     </main>
   </div>
 </template>
 
 <script>
-import od from "../lib/index";
+// import od from "../lib/index";
 import OdLeft from "./OdLeft.vue";
-import OdConfig from "./OdConfig.vue";
-import { toRaw } from "@vue/reactivity";
+import configBox from "../components/configs/configBox.vue";
+import configText from "../components/configs/configText.vue";
+import configImage from "../components/configs/configImage.vue";
+// import func from 'vue-editor-bridge';
+// import { toRaw } from "@vue/reactivity";
 export default {
   components: {
     OdLeft,
-    OdConfig,
+    configBox,
+    configText,
+    configImage
   },
   data() {
     return {
       theme: "dark",
       zr: null,
+      zrMark: null,
       grid: {
-        width:null,
-        height:null,
-        backgroundImage:''
+        width: "400",
+        height: "400",
+        backgroundImage: "",
       }, //画布设置数据
+      currentElPos: {}, //当前元素文职信息
       events: [], //事件数据
       series: [], //画布元素集
+      configView: "configBox",
     };
+  },
+  mounted() {
+    this.init();
   },
   methods: {
     //初始化方法
@@ -67,20 +85,21 @@ export default {
         width: this.grid.width,
         height: this.grid.height,
       };
-      this.zr = od.init.init(el, opts);
-      // this.handelClick();
+      this.zr = this.$od.init(el, opts);
+      //打开点击，方便于选中和配置元素
+      this.handelClick();
     },
     /**
      * @name 更新画布大小
      * @description 当容器大小改变时，更新画布大小
-    */
-    resize(){
+     */
+    resize() {
       this.zr.resize(this.grid);
     },
     /**
      * @name 绘制方法集合
      * @description 包含文本，图片，形状等绘制方法
-    */
+     */
     odRender(type, opts) {
       switch (type) {
         case "text":
@@ -92,21 +111,70 @@ export default {
       }
     },
     /**
-     * 绘制文本
-    */
+     * @name 绘制文本
+     * @description
+     */
     drawText(opts) {
-      const text = od.Displayable.Text(opts);
+      const text = new this.$od.Text(opts);
+      text.attr({
+        type: "text",
+        name: "text" + text.id,
+      });
+      text.dirty();
       // this.handleClickEL(text);
       this.zr.add(text);
       this.series.push(text);
+      console.log("this.series", this.series);
     },
     /**
-     * 图片（包括SVG）
-    */
+     * @name 图片（包括SVG）
+     * @description
+     */
     drawImg(opts) {
-      const img = od.Displayable.Image(opts);
+      const img = new this.$od.Image(opts);
+      img.attr({
+        type: "image",
+        name: "image" + img.id,
+      });
       this.zr.add(img);
       this.series.push(img);
+    },
+    /**
+     * @name 模态框
+     * @description 绘制当前元素标记
+     */
+    async drawMark(el) {
+      const box = el.getBoundingRect();
+      this.drawMarkCancle().then(() => {
+        this.zrMark = new this.$od.Rect({
+          shape: {
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height,
+          },
+          style: {
+            fill: "transparent",
+            stroke: "#f00",
+            lineDash: [4, 1, 2, 3],
+          },
+          zlevel: 0,
+        });
+        this.zr.add(this.zrMark);
+      });
+    },
+    /**
+     * @name 取消模态框
+     * @description 取消当前元素标记
+     */
+    drawMarkCancle() {
+      return new Promise((resolve) => {
+        if (this.zrMark) {
+          this.zr.remove(this.zrMark);
+          this.zrMark = null;
+        }
+        resolve();
+      });
     },
     /**
      * @name 鼠标按下（点击）
@@ -118,26 +186,64 @@ export default {
       const x = ev.zrX;
       const y = ev.zrY;
       if (!this.series.length) return;
-      const state = od.Displayable.contain({ x, y }, this.series);
-      state.then((val) => {
-        if (!val) return;
-        this.zr.currentEl = val;
+      this.series.forEach((element) => {
+        if (element.contain(x, y)) {
+          this.zr.currentEl = element;
+          const box = element.getBoundingRect();
+          this.currentElPos = {
+            x: Math.ceil(x - box.x),
+            y: Math.ceil(y - box.y),
+          };
+          return;
+        }
       });
     },
     /**
+     * 元素移动
+     */
+    handleMove(e) {
+      const ev = e || window.event;
+      const x = ev.zrX;
+      const y = ev.zrY;
+      if (this.zr.currentEl) {
+        this.zr.currentEl.attr({
+          style: {
+            x: x - this.currentElPos.x,
+            y: y - this.currentElPos.y,
+          },
+        });
+      } else {
+        return;
+      }
+      if (this.zrMark) {
+        this.zr.remove(this.zrMark);
+      }
+    },
+    /**
      * @name 鼠标抬起
-     * @description 
-    */
+     * @description
+     */
     handleUp() {
       this.zr.currentEl = false;
     },
-    //点击
+    /**
+     * @name 点击
+     * @description 选中操作元素，当前图形
+     * */
     handelClick() {
+      const _this = this;
       this.zr.on(
         "click",
-        function (e) {
+        async function (e) {
           if (typeof e.target == "object") {
-            console.log(e.target);
+            _this.drawMark(e.target);
+            if(e.target.type == 'text'){
+              _this.configView = 'configText'
+            }else if(e.target.type == 'image'){
+              _this.configView = 'configImage'
+            }
+          } else {
+            _this.drawMarkCancle();
           }
         },
         this.zr
@@ -159,10 +265,11 @@ export default {
      * @param el:元素
      * @param index:元素在元素集合的索引值
      * */
-    delEl(el, index) {
-      console.log("el, index", toRaw(el), index);
+    delEl(el) {
+      this.series.filter((item) => {
+        return item.id != el.id;
+      });
       this.zr.remove(el);
-      this.series.splice(index, 1);
     },
     /**
      * @name 保存数据，
@@ -192,7 +299,7 @@ export default {
     /**
      * @name 切换主题
      * @description 现有浅色系和深色系主题切换
-    */
+     */
     changeTheme() {
       this.theme = this.theme == "light" ? "dark" : "light";
       document
@@ -245,10 +352,23 @@ export default {
         top: 50%;
         transform: translate(-50%, -50%);
         border: 1px solid #f60;
+        background-position: 0 0;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
       }
     }
     .config {
+      display: flex;
+      flex-direction: column;
       width: 330px;
+      .title {
+        color: var(--color);
+        height: 35px;
+        line-height: 35px;
+        text-align: left;
+        text-indent: 35px;
+        border-bottom: 1px solid var(--color);
+      }
     }
   }
 }

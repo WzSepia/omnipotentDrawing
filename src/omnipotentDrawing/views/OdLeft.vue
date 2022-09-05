@@ -95,7 +95,7 @@ export default {
     drawText() {
       if (!this.text) return;
       const opts = {
-        draggable: true,
+        // draggable: true,
         rectHover: true,
         style: {
           text: this.text,
@@ -106,13 +106,14 @@ export default {
           x: Math.random() * 100,
           y: Math.random() * 100,
         },
+        zlevel:1,
       };
       this.$emit("render", "text", setOpts(opts));
     },
     //图片
     drawImage() {
       const opts = {
-        draggable: true,
+        // draggable: true,
         rectHover: true,
         style: {
           //string|HTMLImageElement|HTMLCanvasElement	图片的内容，可以是图片的 URL，也可以是 dataURI。
@@ -122,6 +123,7 @@ export default {
           width: 50,
           height: 25,
         },
+        zlevel:1
       };
       this.$emit("render", "image", setOpts(opts));
     },

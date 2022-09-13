@@ -11,6 +11,7 @@ html.dark{
     --bg-li-color:#333333;
     --bg-li-color-header:#666363;
     --bg-li-color-hover:blue;
+    --bg-grid-line-color:rgba(255,255,255,0.1);
 }
 
 html.light{
@@ -20,4 +21,5 @@ html.light{
     --bg-li-color:#f2f2f2;
     --bg-li-color-header:#d5d5d5;
     --bg-li-color-hover:lightblue;
+    --bg-grid-line-color:rgba(0,0,0,0.1);
 }

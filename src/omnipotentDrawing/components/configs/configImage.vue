@@ -1,34 +1,116 @@
 <template>
   <div class="box">
-    <el-form :model="config" ref="formConfig" size="small" :inline="true">
+    <el-form
+      :model="config"
+      ref="formConfig"
+      size="small"
+      :inline="true"
+      label-width="64px"
+    >
       <el-collapse v-model="activeNames">
         <el-collapse-item title="基础信息" name="1">
           <div>
             <div class="content">
               <el-form-item label="图片内容">
-                <el-select v-model="image">
-                    <el-option label='--请选择--' value='0'></el-option>
+                <el-select v-model="image" @change="select">
+                  <el-option
+                    v-for="item in imgs"
+                    :key="item.name"
+                    :label="item.name"
+                    :value="item.img"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
             <el-upload
-                v-model:file-list="fileList"
-                ref="uploadRef"
-                class="upload-demo"
-                :show-file-list="false"
-                :auto-upload="false"
-                :on-change="imageUpload"
-              >
-                <template #trigger>
-                  <el-button type="primary" circle :icon="'Upload'"></el-button>
-                </template>
-              </el-upload>
+              v-model:file-list="fileList"
+              ref="uploadRef"
+              class="upload-demo"
+              :show-file-list="false"
+              :auto-upload="false"
+              :on-change="upload"
+            >
+              <template #trigger>
+                <el-button type="primary" circle :icon="'Upload'"></el-button>
+              </template>
+            </el-upload>
+            <el-button
+              type="primary"
+              circle
+              :icon="'Delete'"
+              @click="del"
+            ></el-button>
+          </div>
+          <div>
+            <div class="content">
+              <el-form-item label="图片代码">
+                <el-input v-model="config.options.code" clearable></el-input>
+              </el-form-item>
+            </div>
+            <div class="btns">
               <el-button
                 type="primary"
                 circle
                 :icon="'Delete'"
-                @click="del"
+                @click="delCode"
               ></el-button>
+            </div>
+          </div>
+          <div>
+            <div class="content">
+              <el-form-item label="默认选中">
+                <el-switch
+                  v-model="config.options.checked"
+                  @change="checkedChange()"
+                />
+              </el-form-item>
+            </div>
+          </div>
+          <div>
+            <div class="content xywh">
+              <el-form-item label="位置尺寸">
+                <el-form-item label="X" label-width="20px">
+                  <el-input-number
+                    v-model="config.x"
+                    class="middle"
+                    placeholder="px"
+                    controls-position="right"
+                  />
+                </el-form-item>
+                <el-form-item label="Y" label-width="20px">
+                  <el-input-number
+                    v-model="config.y"
+                    class="middle"
+                    placeholder="px"
+                    controls-position="right"
+                  />
+                </el-form-item>
+
+                <el-form-item label="W" label-width="20px">
+                  <el-input-number
+                    v-model="config.style.width"
+                    class="middle"
+                    placeholder="px"
+                    controls-position="right"
+                  />
+                </el-form-item>
+
+                <el-form-item label="H" label-width="20px">
+                  <el-input-number
+                    v-model="config.style.height"
+                    class="middle"
+                    placeholder="px"
+                    controls-position="right"
+                  />
+                </el-form-item>
+              </el-form-item>
+            </div>
+            <el-button
+              type="primary"
+              circle
+              :icon="'Refresh'"
+              @click="xywhChange()"
+            ></el-button>
           </div>
         </el-collapse-item>
       </el-collapse>
@@ -38,97 +120,121 @@
 
 <script>
 /* eslint-disable */
+import { toRaw } from "@vue/reactivity";
+import _ from "lodash";
+import img from "../../../assets/logo.png";
 export default {
-  name: "OdConfig",
+  name: "configImage",
   props: {
-    element,
+    configEl: Object,
   },
   data() {
     return {
       activeNames: "1",
       fileList: [], //上传文件
-      image:'0',
-      config: {
-        image:'',//图片内容
-      },
+      image: "--请选择--",
+      imgs: [
+        {
+          name: "图片1",
+          img,
+        },
+      ],
+      config: {},
     };
   },
   watch: {
+    // 侦听单个嵌套属性：
+    "configEl.x": {
+      handler(val) {
+        this.config.x = val;
+        this.config.y = this.configEl.y;
+      },
+      deep: true,
+    },
+  },
+  beforeMount() {
+    this.config = this.configEl;
   },
   mounted() {},
   methods: {
     /**
-     * 画布背景图设置
+     * @name 图片选择
+     * @description 图片base64编码
      */
-    imageUpload(file) {
+    select(data) {
+      this.config.style.image = data;
+      this.$parent.currentEl.attr({
+        style: {
+          image: this.config.style.image,
+        },
+      });
+    },
+    /**
+     * 图片上传
+     */
+    upload(file) {
       const _this = this;
       var reader = new FileReader();
       reader.readAsDataURL(file.raw);
       reader.onload = function (e) {
-        _this.grid.backgroundImage = e.target.result;
-        _this.$parent.grid.backgroundImage = e.target.result;
-
+        _this.config.style.image = e.target.result;
+        _this.$parent.currentEl.attr({
+          style: {
+            image: _this.config.style.image,
+          },
+        });
+        _this.image = "--请选择--";
       };
     },
     /**
-     * @name 容器背景图片选择
-     * @description 背景图base64编码
+     * @name 图片删除
+     * @description 删除当前图片元素
      */
-    bgImgSelect(data) {
-      console.log(data);
+    del() {
+      this.$parent.delEl();
+    },
+    /**
+     * @name 代码改变
+     * @description 修改当前图片元素代码
+     */
+    codeChange() {
+      this.$parent.currentEl.attr({
+        options: {
+          code: this.config.options.code,
+        },
+      });
+    },
+    /**
+     * @name 代码删除
+     * @description 删除当前图片元素代码
+     */
+    delCode() {
+      this.config.options.code = null;
+      this.codeChange();
+    },
+    /**
+     * @name 是否选中
+     */
+    checkedChange() {
+      this.$parent.currentEl.options.checked = this.config.options.checked;
+    },
+    /**
+     * @name 刷新
+     */
+    xywhChange() {
+      this.$parent.currentEl.attr({
+        x: this.config.x,
+        y: this.config.y,
+        style: {
+          width: this.config.style.width,
+          height: this.config.style.height,
+        },
+      });
+      this.$parent.drawMark(this.$parent.currentEl);
     },
   },
 };
 </script>
 <style lang="scss" scoped>
-.box {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  padding: 10px;
-  box-sizing: border-box;
-  ::v-deep(.el-collapse) {
-    background-color: transparent;
-    .el-collapse-item__header,
-    .el-collapse-item__wrap,
-    .el-collapse-item__content {
-      color: var(--color);
-      background-color: var(--bg-li-color);
-    }
-    .el-collapse-item__header {
-      height: 35px;
-      text-indent: 14px;
-      background-color: var(--bg-li-color-header);
-    }
-    .el-collapse-item__wrap {
-      border-bottom: none;
-    }
-    .el-collapse-item__content {
-      padding: 10px 0;
-      > div {
-        display: flex;
-        p {
-          width: 60px;
-        }
-        .content {
-          flex: 1;
-        }
-        .btns {
-          width: 80px;
-        }
-      }
-      .el-form-item {
-        margin-right: 6px;
-        .el-form-item__label {
-          color: var(--color);
-        }
-        .el-form-item__content {
-          .small {
-            width: 50px;
-          }
-        }
-      }
-    }
-  }
-}
+@import "./css/index.scss";
 </style>

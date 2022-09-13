@@ -11,23 +11,24 @@
       </el-input>
       <el-scrollbar max-height="310px">
         <!-- <ul>
-          <li v-for="(item,index) in lists" :key='item.id' @click='liClick($event,item)'>
-            <span>{{item.name}}</span>
-            <el-button type="danger" @click="del(item,index)">删除</el-button>
+          <li v-for="item in lists" :key='item.id' @click='liClick($event,item)'>
+            <span>{{item.options.name}}</span>
+            <el-button type="danger" @click="del(item)">删除</el-button>
           </li>
         </ul> -->
         <el-tree
           ref="treeRef"
           class="filter-tree"
-          :data="lists"
+          :data="lis"
           :props="defaultProps"
           default-expand-all
           :filter-node-method="filterNode"
+          @node-click="liClick"
         >
-          <template #default="{ node, data }">
+          <template #default="{ data }">
             <div class="custom-tree-node">
-              <span>{{ node.label }}</span>
-              <el-button type="danger" @click="del(data, node)">删除</el-button>
+              <span>{{ data.options.name }}</span>
+              <!-- <el-button type="danger" @click="del(data)">删除</el-button> -->
             </div>
           </template>
         </el-tree>
@@ -45,6 +46,10 @@
             <img src="@/assets/img.svg" alt="图片" />
             <p>图片</p>
           </li>
+          <li @click="renderImage">
+            <img src="@/assets/img.svg" alt="图片" />
+            <p>模拟绘制</p>
+          </li>
         </ul>
       </el-scrollbar>
     </div>
@@ -52,15 +57,17 @@
 </template>
 <script>
 /* eslint-disable */
+import { reactive } from 'vue';
 import { toRaw } from "@vue/reactivity";
 import { setOpts } from "../lib/Options/opts";
-import img from '../../assets/img.svg';
+import img from "../../assets/img.svg";
 export default {
   props: {
     lists: Array,
   },
   data() {
     return {
+      lis: [],
       text: "我是文本",
       filterText: "",
       defaultProps: {
@@ -71,6 +78,16 @@ export default {
   },
   mounted() {},
   watch: {
+    lists: {
+      handler(val) {
+        if (!val) return;
+        this.lis = this.lists;
+        this.lis.filter((item) => {
+          return item.type != "mark";
+        });
+      },
+      deep: true,
+    },
     filterText(val) {
       this.$refs["treeRef"].filter(val);
     },
@@ -86,55 +103,88 @@ export default {
     /**
      *
      */
-    liClick(e, data) {
-      console.log(e, data);
+    liClick(node) {
+      console.log(node);
+      this.$parent.configBoardImage(node);
+      this.$parent.drawMark(node);
     },
     /**
      * 绘制文本
      * */
     drawText() {
+      const _this = this;
       if (!this.text) return;
       const opts = {
-        // draggable: true,
+        draggable: true,
         rectHover: true,
+        x: Math.round(Math.random() * 300),
+        y: Math.round(Math.random() * 300),
         style: {
           text: this.text,
-          fill: `rgb(${Math.random() * 255},${Math.random() * 255},${
+          fill: `rgb(${Math.round(Math.random() * 255)},${Math.round(
             Math.random() * 255
-          })`,
+          )},${Math.round(Math.random() * 255)})`,
+          fontFamily: "微软雅黑",
           fontSize: "38px",
-          x: Math.random() * 100,
-          y: Math.random() * 100,
+          textWidth: 100,
+          textHeight: 40,
+          truncate: {
+            ellipsis: "...",
+            outerWidth: 100,
+            outerHeight: 40,
+          },
+          //文字位置'inside'、 'left'、 'right'、 'top'、 'bottom'
+          textPosition: "left",
         },
-        zlevel:1,
+        zlevel: 2,
+        onclick() {
+          _this.$parent.configBoardText(this);
+          _this.$parent.drawMark(this);
+        },
+        ondrag() {
+          _this.$parent.configBoardText(this);
+          _this.$parent.drawMarkCancle();
+        },
       };
-      this.$emit("render", "text", setOpts(opts));
+      this.$emit("render", "text", opts); //setOpts(opts)
     },
     //图片
     drawImage() {
+      const _this = this;
       const opts = {
-        // draggable: true,
-        rectHover: true,
+        draggable: true,
+        // rectHover: true,
+        x: Math.round(Math.random() * 300),
+        y: Math.round(Math.random() * 300),
         style: {
-          //string|HTMLImageElement|HTMLCanvasElement	图片的内容，可以是图片的 URL，也可以是 dataURI。
-          image: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeD0iMTJweCIgeT0iMHB4IiB3aWR0aD0iMjRweCIgaGVpZ2h0PSIzcHgiIHZpZXdCb3g9IjAgMCA2IDMiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDYgMyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBvbHlnb24gcG9pbnRzPSI1Ljk5MiwwIDIuOTkyLDMgLTAuMDA4LDAgIi8+PC9zdmc+`,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
+          image: img,
           width: 50,
-          height: 25,
+          height: 50,
         },
-        zlevel:1
+        zlevel: 1,
+        onclick() {
+          _this.$parent.configBoardImage(this);
+          _this.$parent.drawMark(this);
+        },
+        ondrag() {
+          _this.$parent.configBoardImage(this);
+          _this.$parent.drawMarkCancle();
+        },
       };
-      this.$emit("render", "image", setOpts(opts));
+      this.$emit("render", "image", opts); //setOpts(opts)
     },
     //删除
-    del(el, node) {
-      const parent = node.parent;
-      const children = parent.data || parent.data.children;
-      const index = children.findIndex((d) => {
-        return d.id == el.id;
+    del(el) {
+      this.$emit("handleDel", el);
+    },
+    /**
+     * 有数据情况下的绘制-模拟
+     */
+    renderImage() {
+      const series = this.$parent.saveData.series;
+      series.forEach((element) => {
+        this.$parent.odRender(element.options.type, element);
       });
-      this.$emit("handleDel", el, index);
     },
   },
 };
@@ -236,7 +286,8 @@ export default {
         list-style: none;
         margin: 8px;
         cursor: pointer;
-        img,h1 {
+        img,
+        h1 {
           width: 90px;
           height: 90px;
           line-height: 90px;

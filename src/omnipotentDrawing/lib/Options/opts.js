@@ -2,10 +2,12 @@
  * @description 抽象类 可显示的元素
  *
  */
-
+import _ from 'lodash';
 export function setOpts(opts) {
   if (typeof opts != "object") return;
   const init = {
+    code: "", //图片代码
+    checked: false, //是否默认选中
     culling: opts.culling || false, //boolean	false	是否进行裁剪。
     cursor: opts.cursor || "pointer", //string	'pointer'	鼠标移到元素上时的鼠标样式。
     draggable: opts.draggable || false, //boolean	false	图形是否可拖曳。
@@ -65,13 +67,15 @@ export function setOpts(opts) {
     textBorderRadius: opts.style.textBorderRadius || 0, //	number	0	文字圆角大小。
     textPadding: opts.style.textPadding || null, //	number|number[]	null	文字内边距，可以是 2 或 [2, 4] 或 [2, 3, 4, 5] 的形式，同 CSS Padding，单位是像素。
     rich: opts.style.rich || null, //	Object	null	富文本样式，参考 ECharts rich 配置项。
-    truncate: opts.style.truncate || null, //	Object	null	当文字过长显示不下时，显示省略号表示。
-    outerWidth: opts.style.truncate ? opts.style.truncate.outerWidth : null, //	number	null	包含了 textPadding 的宽度，超出这个范围就裁剪。
-    outerHeight: opts.style.truncate ? opts.style.truncate.outerHeight : null, //	number	null	包含了 textPadding 的高度，超出这个范围就裁剪。
-    ellipsis: opts.style.truncate ? opts.style.truncate.ellipsis : "...", //	strinsg	'...'	默认用省略号表示超出部分，也可以对其进行自定义。
-    placeholder: opts.style.truncate ? opts.style.truncate.placeholder : null, //	string	null	如果空间过小，导致省略号也显示不下，但是又不想空着，可能得有个什么标记表示这里是有字符的，就用个 “点”，就是在这个 placeholder 里设置。
-    blend: opts.style.blend || null, //	string	null	混合模式，同 Canvas globalCompositeOperation。
+    truncate:{
+      outerWidth: (opts.style.truncate&&opts.style.truncate.outerWidth) ? opts.style.truncate.outerWidth : null, //	number	null	包含了 textPadding 的宽度，超出这个范围就裁剪。
+      outerHeight: (opts.style.truncate&&opts.style.truncate.outerHeight) ? opts.style.truncate.outerHeight : null, //	number	null	包含了 textPadding 的高度，超出这个范围就裁剪。
+      ellipsis: (opts.style.truncate&&opts.style.truncate.ellipsis) ? opts.style.truncate.ellipsis : "...", //	strinsg	'...'	默认用省略号表示超出部分，也可以对其进行自定义。
+      placeholder: (opts.style.truncate&&opts.style.truncate.placeholder) ? opts.style.truncate.placeholder : null, //	string	null	如果空间过小，导致省略号也显示不下，但是又不想空着，可能得有个什么标记表示这里是有字符的，就用个 “点”，就是在这个 placeholder 里设置。
+    },
+    blend: opts.style.blend || null //	string	null	混合模式，同 Canvas globalCompositeOperation。 
   };
   init.style = style;
-  return Object.assign({}, init, opts);
+  return _.mergeWith(init,opts);
+  // return Object.assign({}, init, opts);
 }

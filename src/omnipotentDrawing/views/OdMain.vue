@@ -18,51 +18,64 @@
         />
       </div>
       <div class="board">
-        <div
+        <div class="header">
+          <el-input v-model="grid.name" placeholder="个性化组件名称"></el-input>
+          <el-button type="primary" title="显示参数名称">T</el-button>
+          <el-button
+            type="primary"
+            :icon="'View'"
+            title="辅助线显示关闭"
+          ></el-button>
+        </div>
+        <div class="board-box grid-line">
+          <div id="board-main"></div>
+        </div>
+        <!-- <div
           id="board-main"
-          @mousedown="handleDown"
           @mouseup="handleUp"
           @mousemove="handleMove"
-        ></div>
-        <!-- <div id="board-main"></div> -->
+          @mouseleave="handelLeave"
+        ></div> -->
       </div>
       <div class="config">
         <div class="title">配置</div>
-        <component :is="configView" />
+        <component :is="configView" v-model:configEl="config" :text="theme" />
       </div>
     </main>
   </div>
 </template>
 
 <script>
-// import od from "../lib/index";
+/* eslint-disable */
+import { reactive } from "vue";
 import OdLeft from "./OdLeft.vue";
 import configBox from "../components/configs/configBox.vue";
 import configText from "../components/configs/configText.vue";
 import configImage from "../components/configs/configImage.vue";
-// import func from 'vue-editor-bridge';
-// import { toRaw } from "@vue/reactivity";
+import { toRaw } from "@vue/reactivity";
 export default {
   components: {
     OdLeft,
     configBox,
     configText,
-    configImage
+    configImage,
   },
   data() {
     return {
       theme: "dark",
       zr: null,
       zrMark: null,
+      saveData: {},
       grid: {
         width: "400",
         height: "400",
         backgroundImage: "",
       }, //画布设置数据
-      currentElPos: {}, //当前元素文职信息
+      currentEl: null, //当前操作元素
+      config: {}, //
       events: [], //事件数据
       series: [], //画布元素集
-      configView: "configBox",
+      configView: "configBox", //"configBox",
     };
   },
   mounted() {
@@ -111,20 +124,36 @@ export default {
       }
     },
     /**
+     * @图形重绘
+     * @description 删除并新增
+     */
+    resetRender(type, opts) {
+      this.delEl(this.currentEl);
+      this.odRender(type, opts);
+    },
+    /**
      * @name 绘制文本
      * @description
      */
     drawText(opts) {
       const text = new this.$od.Text(opts);
       text.attr({
-        type: "text",
-        name: "text" + text.id,
+        options: {
+          type: "text",
+          name: "text" + text.id,
+          code: "text" + text.id, //图片代码
+          checked: false, //是否默认选中
+          jumpNumber: {
+            //跳数
+            show: false,
+            time: null,
+            split: null,
+          },
+        },
       });
-      text.dirty();
-      // this.handleClickEL(text);
       this.zr.add(text);
       this.series.push(text);
-      console.log("this.series", this.series);
+      // console.log("this.series", this.zr.storage._roots);
     },
     /**
      * @name 图片（包括SVG）
@@ -133,8 +162,12 @@ export default {
     drawImg(opts) {
       const img = new this.$od.Image(opts);
       img.attr({
-        type: "image",
-        name: "image" + img.id,
+        options: {
+          type: "image",
+          name: "image" + img.id,
+          code: "image" + img.id, //图片代码
+          checked: false, //是否默认选中
+        },
       });
       this.zr.add(img);
       this.series.push(img);
@@ -143,88 +176,38 @@ export default {
      * @name 模态框
      * @description 绘制当前元素标记
      */
-    async drawMark(el) {
+    drawMark(el) {
+      this.currentEl = el;
       const box = el.getBoundingRect();
-      this.drawMarkCancle().then(() => {
-        this.zrMark = new this.$od.Rect({
-          shape: {
-            x: box.x,
-            y: box.y,
-            width: box.width,
-            height: box.height,
-          },
-          style: {
-            fill: "transparent",
-            stroke: "#f00",
-            lineDash: [4, 1, 2, 3],
-          },
-          zlevel: 0,
-        });
-        this.zr.add(this.zrMark);
+      this.drawMarkCancle();
+      this.zrMark = new this.$od.Rect({
+        draggable: false,
+        x: el.x - 5,
+        y: el.y - 5,
+        type: "mark",
+        cursor: "auto",
+        shape: {
+          width: box.width + 10,
+          height: box.height + 10,
+        },
+        style: {
+          fill: "transparent",
+          stroke: "#f00",
+          lineDash: [4, 1, 2, 3],
+        },
+        zlevel: 0,
       });
+      this.zr.add(this.zrMark);
     },
     /**
      * @name 取消模态框
      * @description 取消当前元素标记
      */
     drawMarkCancle() {
-      return new Promise((resolve) => {
-        if (this.zrMark) {
-          this.zr.remove(this.zrMark);
-          this.zrMark = null;
-        }
-        resolve();
-      });
-    },
-    /**
-     * @name 鼠标按下（点击）
-     * @description 鼠标在实例有按下（点击）操作，
-     * @description 检测并校验当前可操作图形元素
-     * */
-    handleDown(e) {
-      const ev = e || window.event;
-      const x = ev.zrX;
-      const y = ev.zrY;
-      if (!this.series.length) return;
-      this.series.forEach((element) => {
-        if (element.contain(x, y)) {
-          this.zr.currentEl = element;
-          const box = element.getBoundingRect();
-          this.currentElPos = {
-            x: Math.ceil(x - box.x),
-            y: Math.ceil(y - box.y),
-          };
-          return;
-        }
-      });
-    },
-    /**
-     * 元素移动
-     */
-    handleMove(e) {
-      const ev = e || window.event;
-      const x = ev.zrX;
-      const y = ev.zrY;
-      if (this.zr.currentEl) {
-        this.zr.currentEl.attr({
-          style: {
-            x: x - this.currentElPos.x,
-            y: y - this.currentElPos.y,
-          },
-        });
-      } else {
-        return;
-      }
       if (this.zrMark) {
         this.zr.remove(this.zrMark);
+        this.zrMark = null;
       }
-    },
-    /**
-     * @name 鼠标抬起
-     * @description
-     */
-    handleUp() {
-      this.zr.currentEl = false;
     },
     /**
      * @name 点击
@@ -232,31 +215,11 @@ export default {
      * */
     handelClick() {
       const _this = this;
-      this.zr.on(
-        "click",
-        async function (e) {
-          if (typeof e.target == "object") {
-            _this.drawMark(e.target);
-            if(e.target.type == 'text'){
-              _this.configView = 'configText'
-            }else if(e.target.type == 'image'){
-              _this.configView = 'configImage'
-            }
-          } else {
-            _this.drawMarkCancle();
-          }
-        },
-        this.zr
-      );
-    },
-    /**
-     * @name 元素点击
-     * @description 配置面板可配置元素点击事件
-     * @param context:可执行上下文，可执行操作元素（图形元素）
-     * */
-    handleClickEL(context) {
-      context.on("mousedown", (e) => {
-        console.log(e);
+      this.zr.on("click", async function (e) {
+        if (!e.target) {
+          _this.drawMarkCancle();
+          _this.configView = "configBox";
+        }
       });
     },
     /**
@@ -266,10 +229,81 @@ export default {
      * @param index:元素在元素集合的索引值
      * */
     delEl(el) {
-      this.series.filter((item) => {
-        return item.id != el.id;
+      const ele = el || this.currentEl;
+      let arr = this.series;
+      this.zr.remove(ele);
+      this.series = arr.filter((item) => {
+        console.log(item.id, ele.id);
+        return item.id != ele.id;
       });
-      this.zr.remove(el);
+      this.drawMarkCancle();
+      this.configView = "configBox";
+    },
+    /**
+     * @name 配置文本
+     */
+    configBoardText(el) {
+      this.config.x = el.x;
+      this.config.y = el.y;
+      (this.config.options = this.configBoardOptions(el, "text")),
+        (this.config.style = {
+          text: el.style.text,
+          fill: el.style.fill,
+          fontFamily: el.style.fontFamily,
+          fontSize: el.style.fontSize,
+          textWidth: el.style.textWidth,
+          textHeight: el.style.textHeight,
+          truncate: {
+            ellipsis: el.style.truncate.ellipsis,
+            outerWidth: el.style.textWidth,
+            outerHeight: el.style.textHeight,
+          },
+          textPosition: el.style.textPosition,
+        });
+      this.configView = "configText";
+    },
+    /**
+     * @name 配置图片
+     */
+    configBoardImage(el) {
+      this.config.x = el.x;
+      this.config.y = el.y;
+      (this.config.options = this.configBoardOptions(el, "image")),
+        (this.config.style = {
+          image: el.style.img,
+          width: el.style.width,
+          height: el.style.height,
+        });
+      this.configView = "configImage";
+    },
+    /**
+     * @name 配置自定义属性
+     */
+    configBoardOptions(el, type) {
+      switch (type) {
+        case "text":
+          return {
+            type: el.options.type,
+            name: el.options.name,
+            code: el.options.code, //图片代码
+            checked: el.options.checked, //是否默认选中
+            jumpNumber: {
+              //跳数
+              show: el.options.jumpNumber.show,
+              time: el.options.jumpNumber.time,
+              split: el.options.jumpNumber.split,
+            },
+          };
+          break;
+        case "image":
+          return {
+            type: el.options.type,
+            name: el.options.name,
+            code: el.options.code, //图片代码
+            checked: el.options.checked, //是否默认选中
+          };
+          break;
+      }
     },
     /**
      * @name 保存数据，
@@ -281,10 +315,35 @@ export default {
     save() {
       let options = {
         grid: this.grid,
-        events: this.events,
-        series: this.series,
+        events: null,
+        series: [],
       };
+      this.series.forEach((item) => {
+        let opt = {};
+        if ((item.options.type == "text")) {
+          opt = {
+            draggable:true,
+            rectHover: true,
+            x:item.x,
+            y:item.y,
+            options:item.options,
+            style: item.style,
+            zlevel: item.zlevel,
+          };
+        } else if ((item.options.type == "image")) {
+          opt = {
+            draggable:true,
+            x:item.x,
+            y:item.y,
+            options:item.options,
+            style: item.style,
+            zlevel: item.zlevel,
+          };
+        }
+        options.series.push(opt);
+      });
       console.log(options);
+      this.saveData = options;
     },
     /**
      * @name 关闭绘图系统界面
@@ -346,15 +405,52 @@ export default {
     }
     .board {
       flex: 1;
-      #board-main {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        border: 1px solid #f60;
-        background-position: 0 0;
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
+      .header {
+        height: 35px;
+        line-height: 35px;
+        display: flex;
+        justify-content: flex-start;
+        ::v-deep(.el-input) {
+          width: 150px;
+          .el-input__wrapper {
+            height: 30px;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid var(--color);
+            box-shadow: none;
+            border-radius: 0;
+          }
+        }
+      }
+      .board-box {
+        width: 100%;
+        height: calc(100% - 35px);
+        &.grid-line {
+          background-image: linear-gradient(
+            0deg,
+            var(--bg-grid-line-color) 0px,
+            var(--bg-grid-line-color) 1px,
+            transparent 1px,
+            transparent 100px
+          ),linear-gradient(
+            90deg,
+            var(--bg-grid-line-color) 0px,
+            var(--bg-grid-line-color) 1px,
+            transparent 1px,
+            transparent 100px
+          );
+          background-size: 15px 15px;
+        }
+        #board-main {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          border: 1px solid #f60;
+          background-position: 0 0;
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+        }
       }
     }
     .config {

@@ -1,183 +1,385 @@
 <template>
   <div class="box">
-    <el-form :model="config" ref="formConfig" size="small" :inline="true">
-      <el-collapse v-model="activeNames">
-        <el-collapse-item title="基础信息" name="1">
-          <div>
-            <p>画布大小</p>
-            <div class="content">
-              <el-form-item label="宽">
-                <el-input
-                  class="small"
-                  v-model.number="grid.width"
-                  placeholder="px"
-                >
-                </el-input>
-              </el-form-item>
-              <el-form-item label="长">
-                <el-input
-                  class="small"
-                  v-model.number="grid.height"
-                  placeholder="px"
-                >
-                </el-input>
-              </el-form-item>
+    <el-scrollbar>
+      <el-form
+        :model="config"
+        ref="formConfig"
+        size="small"
+        :inline="true"
+        label-width="64px"
+      >
+        <el-collapse v-model="activeNames">
+          <el-collapse-item title="基础信息" name="1">
+            <div>
+              <div class="content">
+                <el-form-item label="文本内容">
+                  <el-input
+                    class="large"
+                    v-model="config.style.text"
+                    placeholder="px"
+                    clearable
+                    @input="(val) => textChange(val)"
+                  >
+                  </el-input>
+                </el-form-item>
+              </div>
+              <div class="btns">
+                <el-button
+                  type="primary"
+                  circle
+                  :icon="'Delete'"
+                  @click="del"
+                ></el-button>
+              </div>
             </div>
-            <div class="btns">
+
+            <div>
+              <div class="content">
+                <el-form-item label="文本代码">
+                  <el-input
+                    class="large"
+                    v-model="config.options.code"
+                    clearable
+                    @input="(val) => codeChange(val)"
+                  ></el-input>
+                </el-form-item>
+              </div>
+              <div class="btns">
+                <el-button
+                  type="primary"
+                  circle
+                  :icon="'Delete'"
+                  @click="delCode"
+                ></el-button>
+              </div>
+            </div>
+
+            <div>
+              <div class="content">
+                <el-form-item label="默认选中">
+                  <el-switch
+                    v-model="config.options.checked"
+                    @change="checkedChange()"
+                  />
+                </el-form-item>
+              </div>
+            </div>
+            <div>
+              <div class="content xywh">
+                <el-form-item label="位置尺寸">
+                  <el-form-item label="X" label-width="20px">
+                    <el-input-number
+                      v-model="config.x"
+                      class="middle"
+                      placeholder="px"
+                      controls-position="right"
+                    />
+                  </el-form-item>
+                  <el-form-item label="Y" label-width="20px">
+                    <el-input-number
+                      v-model="config.y"
+                      class="middle"
+                      placeholder="px"
+                      controls-position="right"
+                    />
+                  </el-form-item>
+
+                  <el-form-item label="W" label-width="20px">
+                    <el-input-number
+                      v-model="config.style.textWidth"
+                      class="middle"
+                      placeholder="px"
+                      controls-position="right"
+                    />
+                  </el-form-item>
+
+                  <el-form-item label="H" label-width="20px">
+                    <el-input-number
+                      v-model="config.style.textHeight"
+                      class="middle"
+                      placeholder="px"
+                      controls-position="right"
+                    />
+                  </el-form-item>
+                </el-form-item>
+              </div>
               <el-button
                 type="primary"
-                round
-                :icon="'Check'"
-                @click="sureGrid"
+                circle
+                :icon="'Refresh'"
+                @click="xywhChange()"
               ></el-button>
             </div>
-          </div>
+            <div>
+              <div class="content">
+                <el-form-item label="文字超出">
+                  <el-radio-group v-model="config.style.truncate.ellipsis">
+                    <el-radio label="null">折行展示</el-radio>
+                    <el-radio label="...">省略号展示</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </div>
+            </div>
+          </el-collapse-item>
+          <el-collapse-item title="样式设置" name="2">
+            <div>
+              <div class="content">
+                <el-form-item label="文本样式">
+                  <el-input
+                    class="large"
+                    v-model="config.style.fill"
+                    placeholder="#000000"
+                    clearable
+                    @change="fillChange()"
+                  >
+                  </el-input>
+                  <span style="margin: 0 0 0 10px"></span>
+                  <el-color-picker
+                    v-model="config.style.fill"
+                    show-alpha
+                    @change="fillChange()"
+                  />
+                  <el-input
+                    class="large"
+                    v-model="config.style.fontFamily"
+                    placeholder="微软雅黑"
+                    clearable
+                    @change="fontFamilyChange()"
+                  >
+                  </el-input>
+                  <el-input
+                    class="large"
+                    v-model.number="config.style.fontSize"
+                    placeholder="px"
+                    clearable
+                    @change="fontSizeChange()"
+                  >
+                  </el-input>
+                </el-form-item>
+              </div>
+            </div>
 
-          <div>
-            <p>背景图片</p>
-            <div class="content">
-              <el-form-item label="img/svg">
-                <el-select v-model="bgimg" @change="bgImgSelect">
-                  <el-option label="--请选择--" value="0"></el-option>
-                </el-select>
-              </el-form-item>
+            <div>
+              <div class="content">
+                <el-form-item label="文本位置">
+                  <el-select v-model="config.style.textPosition">
+                    <el-option lable="内部" value="inside"></el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
             </div>
-            <div class="btns">
-              <el-upload
-                v-model:file-list="fileList"
-                ref="uploadRef"
-                class="upload-demo"
-                :show-file-list="false"
-                :auto-upload="false"
-                :on-change="bgImgUpload"
-              >
-                <template #trigger>
-                  <el-button type="primary" circle :icon="'Upload'"></el-button>
-                </template>
-              </el-upload>
+          </el-collapse-item>
+
+          <el-collapse-item title="数字跳数" name="3">
+            <div>
+              <div class="content">
+                <el-form-item label="跳数效果">
+                  <el-switch
+                    v-model="config.options.jumpNumber.show"
+                    @change="jumpNumberChange()"
+                  />
+                </el-form-item>
+              </div>
             </div>
-          </div>
-        </el-collapse-item>
-      </el-collapse>
-    </el-form>
+
+            <div v-if="config.options.jumpNumber.show">
+              <div class="content">
+                <el-form-item label="跳数时长">
+                  <el-input
+                    class="middle"
+                    v-model="config.options.jumpNumber.time"
+                    clearable
+                  ></el-input>
+                </el-form-item>
+                <el-form-item label="分隔符">
+                  <el-input
+                    class="middle"
+                    v-model="config.options.jumpNumber.split"
+                    clearable
+                  ></el-input>
+                </el-form-item>
+              </div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+      </el-form>
+    </el-scrollbar>
   </div>
 </template>
 
 <script>
 /* eslint-disable */
+import { reactive } from "vue";
+import { toRaw } from "@vue/reactivity";
+import _ from "lodash";
 export default {
-  name: "OdConfig",
-  props: {},
+  name: "configText",
+  props: {
+    configEl: {
+      type: Object,
+      default: () => {
+        return reactive({});
+      },
+    },
+    text: {
+      type: String,
+      default: () => {
+        return "";
+      },
+    },
+  },
   data() {
     return {
       activeNames: "1",
-      fileList: [], //上传文件
-      bgimg: "", //
-      grid: {
-        width: null,
-        height: null,
-        backgroundImage: "",
+      config: {
+        // x: this.configEl.x,
+        // y: this.configEl.y,
+        // options: {
+        //   type: this.configEl.options.type,
+        //   name: this.configEl.options.name,
+        //   code: this.configEl.options.code, //图片代码
+        //   checked: this.configEl.options.checked, //是否默认选中
+        //   jumpNumber: {
+        //     //跳数
+        //     show: this.configEl.options.jumpNumber.show,
+        //     time: this.configEl.options.jumpNumber.time,
+        //     split: this.configEl.options.jumpNumber.split,
+        //   },
+        // },
+        // style: {
+        //   text: this.configEl.style.text,
+        //   fill: this.configEl.style.fill,
+        //   fontFamily: this.configEl.style.fontFamily,
+        //   fontSize: this.configEl.style.fontSize,
+        //   textWidth: this.configEl.style.textWidth,
+        //   textHeight: this.configEl.style.textHeight,
+        //   truncate: {
+        //     ellipsis: this.configEl.style.truncate.ellipsis,
+        //     outerWidth: this.configEl.style.textWidth,
+        //     outerHeight: this.configEl.style.textHeight,
+        //   },
+        //   textPosition: this.configEl.style.textPosition,
+        // },
       },
-      config: {},
     };
   },
   watch: {
-    // 该回调将会在被侦听的对象的属性改变时调动，无论其被嵌套多深
-    // grid: {
-    //   handler(data) {
-    //     console.log(data)
-    //   },
-    //   deep: true
-    // },
+    // 侦听单个嵌套属性：
+    "configEl.x": {
+      handler(val) {
+        this.config.x = val;
+        this.config.y = this.configEl.y;
+      },
+      deep: true,
+    },
+  },
+  beforeMount() {
+    this.config = this.configEl;
   },
   mounted() {},
   methods: {
     /**
-     * @name 确认画布大小配置
-     * @description 配置图形容器大小，也是画布大小，调用创建和更新画布
+     * @name 文本修改
+     * @description
      */
-    sureGrid() {
-      if (!this.grid.width || !this.grid.height) return;
-      Object.assign(this.$parent.grid, this.grid);
-      if (!!this.$parent.zr) {
-        this.$parent.resize();
-      } else {
-        this.$parent.init();
-      }
+    textChange(val) {
+      // this.$parent.config.style.text = val;
+      this.$parent.currentEl.attr({
+        style: {
+          text: val,
+        },
+      });
+      this.$parent.drawMark(this.$parent.currentEl);
     },
     /**
-     * 画布背景图设置
+     * @name 图片删除
+     * @description 删除当前图片元素
      */
-    bgImgUpload(file) {
-      const _this = this;
-      var reader = new FileReader();
-      reader.readAsDataURL(file.raw);
-      reader.onload = function (e) {
-        _this.grid.backgroundImage = e.target.result;
-        _this.$parent.grid.backgroundImage = e.target.result;
-        const el = document.getElementById("board-main");
-        el.style.backgroundImage = "url(" + _this.grid.backgroundImage + ")";
-      };
+    del() {
+      this.$parent.delEl();
     },
     /**
-     * @name 容器背景图片选择
-     * @description 背景图base64编码
+     * @name 代码改变
+     * @description 修改当前图片元素代码
      */
-    bgImgSelect(data) {
-      console.log(data);
+    codeChange(val) {
+      this.$parent.currentEl.attr({
+        code: val,
+      });
     },
+    /**
+     * @name 代码删除
+     * @description 删除当前图片元素代码
+     */
+    delCode() {
+      this.config.code = null;
+      this.codeChange();
+    },
+    /**
+     * @name 是否选中
+     */
+    checkedChange() {
+      this.$parent.currentEl.options.checked= this.config.options.checked;
+    },
+    /**
+     * @name 位置大小变化
+     */
+    xywhChange() {
+      this.$parent.currentEl.attr({
+        x: this.config.x,
+        y: this.config.y,
+        style: {
+          textWidth: this.config.style.textWidth,
+          textHeight: this.config.style.textHeight,
+          truncate: {
+            ellipsis: this.configEl.style.truncate.ellipsis,
+            outerWidth: this.configEl.style.textWidth,
+            outerHeight: this.configEl.style.textHeight,
+          },
+        },
+      });
+      this.$parent.drawMark(this.$parent.currentEl);
+    },
+    /**
+     * @name 改变文字颜色
+     */
+    fillChange() {
+      this.$parent.currentEl.attr({
+        style: {
+          fill: this.config.style.fill,
+        },
+      });
+    },
+    /**
+     * @name 改变文字字体
+     */
+    fontFamilyChange() {
+      this.$parent.currentEl.attr({
+        style: {
+          fontFamily: this.config.style.fontFamily,
+        },
+      });
+    },
+    /**
+     * @name 改变文字大小
+     */
+    fontSizeChange() {
+      const fontSize = this.config.style.fontSize + "px";
+      this.config.style.fontSize = fontSize;
+      this.$parent.currentEl.attr({
+        style: {
+          fontSize: fontSize,
+        },
+      });
+      this.$parent.drawMark(this.$parent.currentEl);
+    },
+    /**
+     *
+     */
+    jumpNumberChange() {},
   },
 };
 </script>
 <style lang="scss" scoped>
-.box {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  padding: 10px;
-  box-sizing: border-box;
-  ::v-deep(.el-collapse) {
-    background-color: transparent;
-    .el-collapse-item__header,
-    .el-collapse-item__wrap,
-    .el-collapse-item__content {
-      color: var(--color);
-      background-color: var(--bg-li-color);
-    }
-    .el-collapse-item__header {
-      height: 35px;
-      text-indent: 14px;
-      background-color: var(--bg-li-color-header);
-    }
-    .el-collapse-item__wrap {
-      border-bottom: none;
-    }
-    .el-collapse-item__content {
-      padding: 10px 0;
-      > div {
-        display: flex;
-        p {
-          width: 60px;
-        }
-        .content {
-          flex: 1;
-        }
-        .btns {
-          width: 80px;
-        }
-      }
-      .el-form-item {
-        margin-right: 6px;
-        .el-form-item__label {
-          color: var(--color);
-        }
-        .el-form-item__content {
-          .small {
-            width: 50px;
-          }
-        }
-      }
-    }
-  }
-}
+  @import './css/index.scss';
 </style>

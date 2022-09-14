@@ -53,6 +53,7 @@ import configBox from "../components/configs/configBox.vue";
 import configText from "../components/configs/configText.vue";
 import configImage from "../components/configs/configImage.vue";
 import { toRaw } from "@vue/reactivity";
+import img from "../../assets/img.svg";
 export default {
   components: {
     OdLeft,
@@ -63,9 +64,10 @@ export default {
   data() {
     return {
       theme: "dark",
+      img: img,
       zr: null,
       zrMark: null,
-      saveData: {},
+      saveData: null,
       grid: {
         width: "400",
         height: "400",
@@ -79,6 +81,15 @@ export default {
     };
   },
   mounted() {
+    if (this.saveData) {
+      console.log(123);
+      this.grid = this.saveData.grid;
+      this.events = this.saveData.events;
+      const series = this.saveData.series;
+      series.forEach((element) => {
+        this.odRender(element.options.type, element);
+      });
+    }
     this.init();
   },
   methods: {
@@ -113,13 +124,13 @@ export default {
      * @name 绘制方法集合
      * @description 包含文本，图片，形状等绘制方法
      */
-    odRender(type, opts) {
+    odRender(type, opt) {
       switch (type) {
         case "text":
-          this.drawText(opts);
+          this.drawText(opt);
           break;
         case "image":
-          this.drawImg(opts);
+          this.drawImg(opt);
           break;
       }
     },
@@ -135,38 +146,93 @@ export default {
      * @name 绘制文本
      * @description
      */
-    drawText(opts) {
+    drawText(opt) {
+      const _this = this;
+      const opts = {
+        draggable: true,
+        rectHover: true,
+        x: (opt ? opt.x : null) || Math.round(Math.random() * 300),
+        y: (opt ? opt.y : null) || Math.round(Math.random() * 300),
+        style: {
+          text: (opt ? opt.style.text : null) || "我是文本",
+          fill:
+            (opt ? opt.style.fill : null) ||
+            `rgb(${Math.round(Math.random() * 255)},${Math.round(
+              Math.random() * 255
+            )},${Math.round(Math.random() * 255)})`,
+          fontFamily: (opt ? opt.style.fontFamily : null) || "微软雅黑",
+          fontSize: (opt ? opt.style.fontSize : null) || "38px",
+          textWidth: (opt ? opt.style.textWidth : null) || 100,
+          textHeight: (opt ? opt.style.textHeight : null) || 40,
+          truncate: {
+            ellipsis: "...",
+            outerWidth: (opt ? opt.style.truncate.outerWidth : null) || 100,
+            outerHeight: (opt ? opt.style.truncate.outerHeight : null) || 40,
+          },
+          //文字位置'inside'、 'left'、 'right'、 'top'、 'bottom'
+          textPosition: "left",
+        },
+        zlevel: 2,
+        onclick() {
+          _this.configBoardText(this);
+          _this.drawMark(this);
+        },
+        ondrag() {
+          _this.configBoardText(this);
+          _this.drawMarkCancle();
+        },
+      };
       const text = new this.$od.Text(opts);
       text.attr({
         options: {
-          type: "text",
-          name: "text" + text.id,
-          code: "text" + text.id, //图片代码
-          checked: false, //是否默认选中
+          type: (opt ? opt.options.type : null) || "text",
+          name: (opt ? opt.options.name : null) || "text" + text.id,
+          code: (opt ? opt.options.code : null) || "text" + text.id, //图片代码
+          checked: (opt ? opt.options.checked : null) || false, //是否默认选中
           jumpNumber: {
             //跳数
-            show: false,
-            time: null,
-            split: null,
+            show: (opt ? opt.options.jumpNumber.show : null) || false,
+            time: (opt ? opt.options.jumpNumber.time : null) || null,
+            split: (opt ? opt.options.jumpNumber.split : null) || null,
           },
         },
       });
       this.zr.add(text);
       this.series.push(text);
-      // console.log("this.series", this.zr.storage._roots);
     },
     /**
      * @name 图片（包括SVG）
      * @description
      */
-    drawImg(opts) {
+    drawImg(opt) {
+      const _this = this;
+      const opts = {
+        draggable: true,
+        // rectHover: true,
+        x: (opt ? opt.x : null) || Math.round(Math.random() * 300),
+        y: (opt ? opt.y : null) || Math.round(Math.random() * 300),
+        style: {
+          image: (opt ? opt.style.image : null) || this.img,
+          width: (opt ? opt.style.width : null) || 50,
+          height: (opt ? opt.style.height : null) || 50,
+        },
+        zlevel: 1,
+        onclick() {
+          _this.configBoardImage(this);
+          _this.drawMark(this);
+        },
+        ondrag() {
+          _this.configBoardImage(this);
+          _this.drawMarkCancle();
+        },
+      };
       const img = new this.$od.Image(opts);
       img.attr({
         options: {
-          type: "image",
-          name: "image" + img.id,
-          code: "image" + img.id, //图片代码
-          checked: false, //是否默认选中
+          type: (opt ? opt.options.type : null) || "image",
+          name: (opt ? opt.options.name : null) || "image" + img.id,
+          code: (opt ? opt.options.code : null) || "image" + img.id, //图片代码
+          checked: (opt ? opt.options.checked : null) || false, //是否默认选中
         },
       });
       this.zr.add(img);
@@ -177,13 +243,13 @@ export default {
      * @description 绘制当前元素标记
      */
     drawMark(el) {
-      this.currentEl = el;
-      const box = el.getBoundingRect();
+      if(el) this.currentEl = el;
+      const box = this.currentEl.getBoundingRect();
       this.drawMarkCancle();
       this.zrMark = new this.$od.Rect({
         draggable: false,
-        x: el.x - 5,
-        y: el.y - 5,
+        x: this.currentEl.x - 5,
+        y: this.currentEl.y - 5,
         type: "mark",
         cursor: "auto",
         shape: {
@@ -215,12 +281,18 @@ export default {
      * */
     handelClick() {
       const _this = this;
-      this.zr.on("click", async function (e) {
-        if (!e.target) {
-          _this.drawMarkCancle();
-          _this.configView = "configBox";
-        }
-      });
+      this.zr
+        .on("click", async function (e) {
+          if (!e.target) {
+            _this.drawMarkCancle();
+            _this.configView = "configBox";
+          }
+        })
+        .on("mouseup", async function (e) {
+          if (e.target) {
+            _this.drawMark();
+          }
+        });
     },
     /**
      * @name 删除元素（图形元素）
@@ -243,6 +315,7 @@ export default {
      * @name 配置文本
      */
     configBoardText(el) {
+      this.currentEl = el;
       this.config.x = el.x;
       this.config.y = el.y;
       (this.config.options = this.configBoardOptions(el, "text")),
@@ -266,6 +339,7 @@ export default {
      * @name 配置图片
      */
     configBoardImage(el) {
+      this.currentEl = el;
       this.config.x = el.x;
       this.config.y = el.y;
       (this.config.options = this.configBoardOptions(el, "image")),
@@ -320,22 +394,22 @@ export default {
       };
       this.series.forEach((item) => {
         let opt = {};
-        if ((item.options.type == "text")) {
+        if (item.options.type == "text") {
           opt = {
-            draggable:true,
+            draggable: true,
             rectHover: true,
-            x:item.x,
-            y:item.y,
-            options:item.options,
+            x: item.x,
+            y: item.y,
+            options: item.options,
             style: item.style,
             zlevel: item.zlevel,
           };
-        } else if ((item.options.type == "image")) {
+        } else if (item.options.type == "image") {
           opt = {
-            draggable:true,
-            x:item.x,
-            y:item.y,
-            options:item.options,
+            draggable: true,
+            x: item.x,
+            y: item.y,
+            options: item.options,
             style: item.style,
             zlevel: item.zlevel,
           };
@@ -427,18 +501,19 @@ export default {
         height: calc(100% - 35px);
         &.grid-line {
           background-image: linear-gradient(
-            0deg,
-            var(--bg-grid-line-color) 0px,
-            var(--bg-grid-line-color) 1px,
-            transparent 1px,
-            transparent 100px
-          ),linear-gradient(
-            90deg,
-            var(--bg-grid-line-color) 0px,
-            var(--bg-grid-line-color) 1px,
-            transparent 1px,
-            transparent 100px
-          );
+              0deg,
+              var(--bg-grid-line-color) 0px,
+              var(--bg-grid-line-color) 1px,
+              transparent 1px,
+              transparent 100px
+            ),
+            linear-gradient(
+              90deg,
+              var(--bg-grid-line-color) 0px,
+              var(--bg-grid-line-color) 1px,
+              transparent 1px,
+              transparent 100px
+            );
           background-size: 15px 15px;
         }
         #board-main {

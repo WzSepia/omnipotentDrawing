@@ -60,7 +60,6 @@
 import { reactive } from 'vue';
 import { toRaw } from "@vue/reactivity";
 import { setOpts } from "../lib/Options/opts";
-import img from "../../assets/img.svg";
 export default {
   props: {
     lists: Array,
@@ -68,7 +67,6 @@ export default {
   data() {
     return {
       lis: [],
-      text: "我是文本",
       filterText: "",
       defaultProps: {
         children: "children",
@@ -112,66 +110,11 @@ export default {
      * 绘制文本
      * */
     drawText() {
-      const _this = this;
-      if (!this.text) return;
-      const opts = {
-        draggable: true,
-        rectHover: true,
-        x: Math.round(Math.random() * 300),
-        y: Math.round(Math.random() * 300),
-        style: {
-          text: this.text,
-          fill: `rgb(${Math.round(Math.random() * 255)},${Math.round(
-            Math.random() * 255
-          )},${Math.round(Math.random() * 255)})`,
-          fontFamily: "微软雅黑",
-          fontSize: "38px",
-          textWidth: 100,
-          textHeight: 40,
-          truncate: {
-            ellipsis: "...",
-            outerWidth: 100,
-            outerHeight: 40,
-          },
-          //文字位置'inside'、 'left'、 'right'、 'top'、 'bottom'
-          textPosition: "left",
-        },
-        zlevel: 2,
-        onclick() {
-          _this.$parent.configBoardText(this);
-          _this.$parent.drawMark(this);
-        },
-        ondrag() {
-          _this.$parent.configBoardText(this);
-          _this.$parent.drawMarkCancle();
-        },
-      };
-      this.$emit("render", "text", opts); //setOpts(opts)
+      this.$emit("render", "text"); //setOpts(opts)
     },
     //图片
     drawImage() {
-      const _this = this;
-      const opts = {
-        draggable: true,
-        // rectHover: true,
-        x: Math.round(Math.random() * 300),
-        y: Math.round(Math.random() * 300),
-        style: {
-          image: img,
-          width: 50,
-          height: 50,
-        },
-        zlevel: 1,
-        onclick() {
-          _this.$parent.configBoardImage(this);
-          _this.$parent.drawMark(this);
-        },
-        ondrag() {
-          _this.$parent.configBoardImage(this);
-          _this.$parent.drawMarkCancle();
-        },
-      };
-      this.$emit("render", "image", opts); //setOpts(opts)
+      this.$emit("render", "image"); //setOpts(opts)
     },
     //删除
     del(el) {

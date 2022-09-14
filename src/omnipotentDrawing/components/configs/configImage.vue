@@ -132,7 +132,7 @@ export default {
     return {
       activeNames: "1",
       fileList: [], //上传文件
-      image: "--请选择--",
+      image: this.configEl.style.image || "--请选择--",
       imgs: [
         {
           name: "图片1",

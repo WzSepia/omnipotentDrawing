@@ -5,21 +5,52 @@
 }
 
 html.dark{
+    /* 文字颜色 */
     --color:#f2f2f2;
+    --light-color:#f6f6f6;
+    /* 背景色 */
     --bg-color:#333333;
     --bg-btn-color:#333333;
-    --bg-li-color:#333333;
-    --bg-li-color-header:#666363;
-    --bg-li-color-hover:blue;
+    --bg-box-color:#3b3b3b;
+    --bg-board-color:#454545;
+
+    --bg-list-box-color:#333333;
+    --bg-list-header-color:#454545;
+    --bg-list-content-color:#333333;
+    --bg-list-content-icon-color:#333333;
+    --bg-list-item-color:#333333;
+    --bg-list-item-hover-color:#4D91FF;
+
     --bg-grid-line-color:rgba(255,255,255,0.1);
+
+    --bg-collapse-header-color:#e3e3e3;
+    --bg-collapse-content-color:#efefef;
+    /* 阴影 */
+    --shadow-box-color:rgba(122,122,122,0.1)
 }
 
 html.light{
+    /* 文字颜色 */
     --color:#333333;
-    --bg-color:#f1f1f1;
-    --bg-btn-color:#f2f2f2;
-    --bg-li-color:#f2f2f2;
-    --bg-li-color-header:#d5d5d5;
-    --bg-li-color-hover:lightblue;
+    --light-color:#999999;
+    /* 背景色 */
+    --bg-color:#ffffff;
+    --bg-btn-color:#f5f5f5;
+    --bg-box-color:#f5f5f5;
+    --bg-board-color:#e4e4e4;
+
+    --bg-list-box-color:#efefef;
+    --bg-list-header-color:#e3e3e3;
+    --bg-list-content-color:#efefef;
+    --bg-list-content-icon-color:#ffffff;
+    --bg-list-item-color:#f5f5f5;
+    --bg-list-item-hover-color:rgba(71,145,255,0.18);
+
     --bg-grid-line-color:rgba(0,0,0,0.1);
+
+    --bg-collapse-header-color:#e3e3e3;
+    --bg-collapse-content-color:#efefef;
+
+    /* 阴影 */
+    --shadow-box-color:rgba(0,0,0,0.1)
 }
